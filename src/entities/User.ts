@@ -16,7 +16,7 @@ export default class UserEntity extends Entity<User> {
 	}
 
 	public async login(password: string): Promise<string> {
-		const isPasswordValid = await hashLib.verify(this.props.password, password);
+		const isPasswordValid = await hashLib.verify(password, this.props.password);
 		if (!isPasswordValid) throw new Error("Invalid Password");
 		return tokenLib.generate({ userId: this.props.id });
 	}

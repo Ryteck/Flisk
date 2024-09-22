@@ -1,10 +1,15 @@
-import argon2 from "argon2";
+import { compare, genSalt, hash } from "bcrypt";
+
+const generateSalt = () => genSalt();
 
 const hashLib = {
-	generateHash: (password: string): Promise<string> => argon2.hash(password),
+	generateHash: async (password: string): Promise<string> => {
+		const salt = await generateSalt();
+		return hash(password, salt);
+	},
 
-	verify: (hash: string, password: string): Promise<boolean> =>
-		argon2.verify(hash, password),
+	verify: (password: string, hash: string): Promise<boolean> =>
+		compare(password, hash),
 };
 
 export default hashLib;
