@@ -20,5 +20,84 @@ model User {
   email       String @unique
   password    String
 
+  groups         Group[]
+  projects       Project[]
+  projectsMember Member[]
+
   @@map("users")
+}
+
+model Group {
+  id   String @id @default(uuid())
+  name String
+  slug String
+
+  color String
+  icon  String
+
+  userId String @map("user_id")
+  user   User   @relation(fields: userId, references: id)
+
+  projects Project[]
+  members  Member[]
+
+  @@unique([slug, userId])
+  @@map("groups")
+}
+
+enum MemberType {
+  anonymous
+  basic
+  viewer
+  editor
+
+  @@map("member_type")
+}
+
+model Member {
+  id   String     @id @default(uuid())
+  type MemberType
+
+  name  String?
+  email String?
+
+  userId String? @map("user_id")
+  user   User?   @relation(fields: userId, references: id)
+
+  groupId String @map("group_id")
+  group   Group  @relation(fields: groupId, references: id)
+
+  @@map("members")
+}
+
+model Project {
+  id   String @id @default(uuid())
+  name String
+  slug String
+
+  color String
+  icon  String
+
+  userId String @map("user_id")
+  user   User   @relation(fields: userId, references: id)
+
+  groupId String @map("group_id")
+  group   Group  @relation(fields: groupId, references: id)
+
+  steps Step[]
+
+  @@unique([slug, groupId])
+  @@map("projects")
+}
+
+model Step {
+  id          String @id @default(uuid())
+  name        String
+  description String
+  order       Int
+
+  projectId String  @map("project_id")
+  project   Project @relation(fields: projectId, references: id)
+
+  @@map("steps")
 }

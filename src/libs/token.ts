@@ -9,6 +9,7 @@ const tokenLib = {
 		sign(payload, environmentService.TOKEN_SECRET, {
 			expiresIn: environmentService.TOKEN_LIMIT,
 		}),
+
 	verify: (token: string): TokenPayloadSchema => {
 		const payload = verify(token, environmentService.TOKEN_SECRET);
 		return tokenPayloadSchema.parse(payload);
