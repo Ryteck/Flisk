@@ -1,6 +1,7 @@
 import Repository from "@/domain/Repository";
 import UserEntity from "@/entities/User";
-import type { User } from "@prisma/client";
+import type { UserStoreParamSchema } from "@/schemas/user/storeParam";
+import type { UserUpdateParamSchema } from "@/schemas/user/updateParam";
 
 export default class UserRepository extends Repository {
 	public async list(): Promise<UserEntity[]> {
@@ -24,14 +25,9 @@ export default class UserRepository extends Repository {
 		return UserEntity.generate(user);
 	}
 
-	public async store({
-		accountName,
-		displayName,
-		email,
-		password,
-	}: Omit<User, "id">): Promise<UserEntity> {
+	public async store(data: UserStoreParamSchema): Promise<UserEntity> {
 		const user = await this.prismaClient.user.create({
-			data: { accountName, displayName, email, password },
+			data,
 		});
 
 		return UserEntity.generate(user);
@@ -39,14 +35,11 @@ export default class UserRepository extends Repository {
 
 	public async update({
 		id,
-		accountName,
-		displayName,
-		email,
-		password,
-	}: User): Promise<UserEntity> {
+		...data
+	}: UserUpdateParamSchema): Promise<UserEntity> {
 		const user = await this.prismaClient.user.update({
 			where: { id },
-			data: { accountName, displayName, email, password },
+			data,
 		});
 
 		return UserEntity.generate(user);

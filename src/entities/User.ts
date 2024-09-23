@@ -1,18 +1,39 @@
 import Entity from "@/domain/Entity";
 import hashLib from "@/libs/hash";
 import tokenLib from "@/libs/token";
-import type { User } from "@prisma/client";
+import UserRepository from "@/repositories/User";
+import type { UserSchema } from "@/schemas/user";
+import publicRenderedUserSchema, {
+	type PublicRenderedUserSchema,
+} from "@/schemas/user/publicRendered";
+import renderedUserSchema, {
+	type RenderedUserSchema,
+} from "@/schemas/user/rendered";
+import { headers } from "next/headers";
 
-type RenderedUser = Omit<User, "password">;
-type PublicRenderedUser = Pick<User, "displayName" | "email">;
-
-export default class UserEntity extends Entity<User> {
-	public static generate(user: User): UserEntity {
+export default class UserEntity extends Entity<UserSchema> {
+	public static generate(user: UserSchema): UserEntity {
 		return new UserEntity(user);
 	}
 
-	public static generateMany(users: User[]): UserEntity[] {
+	public static generateMany(users: UserSchema[]): UserEntity[] {
 		return users.map(UserEntity.generate);
+	}
+
+	public static async generateFromHeader(): Promise<UserEntity> {
+		const headersList = headers();
+		const authorization = headersList.get("Authorization");
+		if (authorization === null) throw new Error("Without Authorization");
+
+		const tokenArr = authorization.split(" ");
+		if (tokenArr.length !== 2) throw new Error("Poorly formatted token");
+
+		const [prefix, jwt] = tokenArr;
+		if (prefix !== "Bearer") throw new Error("Incorrect prefix");
+
+		const payload = tokenLib.verify(jwt);
+		const userRepository = new UserRepository();
+		return userRepository.show(payload.userId);
 	}
 
 	public async login(password: string): Promise<string> {
@@ -21,13 +42,11 @@ export default class UserEntity extends Entity<User> {
 		return tokenLib.generate({ userId: this.props.id });
 	}
 
-	public render(): RenderedUser {
-		const { id, accountName, displayName, email } = this.props;
-		return { id, accountName, displayName, email };
+	public render(): RenderedUserSchema {
+		return renderedUserSchema.parse(this.props);
 	}
 
-	public publicRender(): PublicRenderedUser {
-		const { displayName, email } = this.props;
-		return { displayName, email };
+	public publicRender(): PublicRenderedUserSchema {
+		return publicRenderedUserSchema.parse(this.props);
 	}
 }
